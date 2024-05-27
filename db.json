@@ -4,6 +4,11 @@
       "name": "Tom",
       "age": "100",
       "gender": "male"
+    },
+    {
+      "name": "Chella",
+      "age": "100",
+      "gender": "male"
     }
   ]
 }
