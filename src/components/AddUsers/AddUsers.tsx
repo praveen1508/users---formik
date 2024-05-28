@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from 'react'
 import { UserModel } from '../../utils/Interfaces/UserModel'
-import { ErrorMessage, Field, Form, Formik } from 'formik'
+import { ErrorMessage, Field, FieldArray, Form, Formik, validateYupSchema } from 'formik'
 import * as Yup from 'yup';
 import './AddUsers.scss';
 
 export const AddUsers = () => {
-  const [userData,setUserData]= useState<UserModel> ();
+  const [userData, setUserData] = useState<UserModel>();
   const fetchUserData = async () => {
     const response = await fetch('http://localhost:3000/users');
     const data: UserModel[] = await response.json();
+    data[0].contactDetails = [{
+      phoneNo: null,
+      emailId: null
+    }]
     setUserData(data[0]);
   }
-  
+
   useEffect(() => {
     fetchUserData();
-  },[]);
+  }, []);
 
   const onSubmit = (values: UserModel) => {
     console.log(values);
@@ -24,37 +28,75 @@ export const AddUsers = () => {
     const response = await fetch('http://localhost:3000/users');
     const data: UserModel[] = await response.json();
     //False shows Error, so return false if the name exists
-    console.log('sdfew'+data.some((user) => user.name === value));
-    return data.some((user) => user.name === value)? false : true;
+    console.log('sdfew' + data.some((user) => user.name === value));
+    return data.some((user) => user.name === value) ? false : true;
   }
 
-  const validationSchema = Yup.object({
-    name: Yup.string().min(3, 'Min 3 Chars').required('Field is Required').test('Unique Name','Name Already Exists',  (value) => isNameExists(value)),
+  const validationSchema = Yup.object().shape({
+    name: Yup.string().min(3, 'Min 3 Chars').required('Field is Required').test('Unique Name', 'Name Already Exists', (value) => isNameExists(value)),
     age: Yup.number().max(50, 'Max Value is 50').required('Field is Required'),
     gender: Yup.string().min(3, 'Min 3 Chars').required('Field is Required'),
+    contactDetails: Yup.array().of(Yup.object().shape({
+      phoneNo: Yup.string().required('Field is Required'),
+      emailId: Yup.string().email('Enter a Valid Email')
+    }))
   })
 
   return (
     userData &&
     <Formik initialValues={userData} onSubmit={onSubmit} validationSchema={validationSchema}>
-      <Form>
-        <div>
-          Name:
-          <Field name='name' type="text"></Field>
-          <div className='error-msg'>
-          <ErrorMessage name='name'></ErrorMessage>
+      {(formikProps) => (
+        <Form>
+          <div>
+            Name:
+            <Field name='name' type="text"></Field>
+            <div className='error-msg'>
+              <ErrorMessage name='name'></ErrorMessage>
+            </div>
           </div>
-        </div>
-        <div>
-          Age
-          <Field name='age' type="number" max="20"></Field>
-        </div>
-        <div>
-          Gender:
-          <Field name='gender' type="text"></Field>
-        </div>
-        <button type='submit'>Submit</button>
-      </Form>
+          <div>
+            Age
+            <Field name='age' type="number" max="20"></Field>
+          </div>
+          <div>
+            Gender:
+            <Field name='gender' type="text"></Field>
+          </div>
+          <FieldArray name='contactDetails'>
+            {
+              (props) => (
+                <>
+                  {formikProps.values.contactDetails?.map((contactDetails, index) => (
+                    <div key={index}>
+                      <div>
+                        Phone No
+                        <Field name={`contactDetails.${index}.phoneNo`} type="text"></Field>
+                        <div className='error-msg'>
+                          <ErrorMessage name={`contactDetails.${index}.phoneNo`}></ErrorMessage>
+                        </div>
+                      </div>
+                      <div>
+                        Email Id
+                        <Field name={`contactDetails.${index}.emailId`} type="email"></Field>
+                        <div className='error-msg'>
+                          <ErrorMessage name={`contactDetails.${index}.emailId`}></ErrorMessage>
+                        </div>
+                      </div>
+                      <button onClick={() => props.remove(index)}> - </button>
+                    </div>
+
+                  ))}
+                  <button onClick={() => props.push({
+                    phoneNo: null,
+                    emailId: null
+                  })}>Add</button>
+                </>
+              )
+            }
+          </FieldArray>
+          <button type='submit'>Submit</button>
+        </Form>
+      )}
     </Formik>
   )
 }
