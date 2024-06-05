@@ -1,34 +1,48 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { UserModel } from '../../utils/Interfaces/UserModel'
-import { ErrorMessage, Field, FieldArray, Form, Formik, validateYupSchema } from 'formik'
+import { ErrorMessage, Field, FieldArray, Form, Formik, useFormikContext, validateYupSchema } from 'formik'
 import * as Yup from 'yup';
 import './AddUsers.scss';
 
+
 export const AddUsers = () => {
+  const nameRef = useRef(null);
+  const [isEmailEntered, setisEmailEntered] = useState<boolean>(false);
   const [userData, setUserData] = useState<UserModel>();
   const fetchUserData = async () => {
     const response = await fetch('http://localhost:3000/users');
     const data: UserModel[] = await response.json();
     data[0].contactDetails = [{
-      phoneNo: null,
-      emailId: null
+      phoneNo: '',
+      emailId: ''
     }]
     setUserData(data[0]);
   }
-
+  const FormObserver = () =>{
+    const {values :{name,contactDetails}} = useFormikContext<UserModel>();
+    useEffect(()=> {
+      console.log(nameRef.current);
+      contactDetails?.forEach(element => {
+        const isEmailNotNull = element.emailId === '' ? false : true;
+        setisEmailEntered(isEmailNotNull);
+      });
+   
+    },[contactDetails]) 
+    return null;
+  } 
   useEffect(() => {
     fetchUserData();
   }, []);
 
+
   const onSubmit = (values: UserModel) => {
-    console.log(values);
+    // console.log(values);
   }
 
   const isNameExists = async (value: string) => {
     const response = await fetch('http://localhost:3000/users');
     const data: UserModel[] = await response.json();
     //False shows Error, so return false if the name exists
-    console.log('sdfew' + data.some((user) => user.name === value));
     return data.some((user) => user.name === value) ? false : true;
   }
 
@@ -37,7 +51,7 @@ export const AddUsers = () => {
     age: Yup.number().max(50, 'Max Value is 50').required('Field is Required'),
     gender: Yup.string().min(3, 'Min 3 Chars').required('Field is Required'),
     contactDetails: Yup.array().of(Yup.object().shape({
-      phoneNo: Yup.string().required('Field is Required'),
+      phoneNo: isEmailEntered ? Yup.string() : Yup.string().required('Field is Required'),
       emailId: Yup.string().email('Enter a Valid Email')
     }))
   })
@@ -47,7 +61,8 @@ export const AddUsers = () => {
     <Formik initialValues={userData} onSubmit={onSubmit} validationSchema={validationSchema}>
       {(formikProps) => (
         <Form>
-          <div>
+          <FormObserver/>
+          <div  ref={nameRef}>
             Name:
             <Field name='name' type="text"></Field>
             <div className='error-msg'>
@@ -70,7 +85,7 @@ export const AddUsers = () => {
                     <div key={index}>
                       <div>
                         Phone No
-                        <Field name={`contactDetails.${index}.phoneNo`} type="text"></Field>
+                        <Field name={`contactDetails.${index}.phoneNo`} type="text" ></Field>
                         <div className='error-msg'>
                           <ErrorMessage name={`contactDetails.${index}.phoneNo`}></ErrorMessage>
                         </div>
