@@ -21,7 +21,6 @@ export const AddUsers = () => {
   const FormObserver = () =>{
     const {values :{name,contactDetails}} = useFormikContext<UserModel>();
     useEffect(()=> {
-      console.log(nameRef.current);
       contactDetails?.forEach(element => {
         const isEmailNotNull = element.emailId === '' ? false : true;
         setisEmailEntered(isEmailNotNull);
@@ -36,7 +35,8 @@ export const AddUsers = () => {
 
 
   const onSubmit = (values: UserModel) => {
-    // console.log(values);
+    changeNameBgColor();
+    console.log(values);
   }
 
   const isNameExists = async (value: string) => {
@@ -45,6 +45,12 @@ export const AddUsers = () => {
     //False shows Error, so return false if the name exists
     return data.some((user) => user.name === value) ? false : true;
   }
+
+  const changeNameBgColor = () => {
+    if(nameRef.current) {
+      (nameRef.current as HTMLElement).style.backgroundColor = 'red';
+    }
+  };
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().min(3, 'Min 3 Chars').required('Field is Required').test('Unique Name', 'Name Already Exists', (value) => isNameExists(value)),
@@ -62,7 +68,7 @@ export const AddUsers = () => {
       {(formikProps) => (
         <Form>
           <FormObserver/>
-          <div  ref={nameRef}>
+          <div ref={nameRef}>
             Name:
             <Field name='name' type="text"></Field>
             <div className='error-msg'>
