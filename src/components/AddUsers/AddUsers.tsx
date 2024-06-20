@@ -55,26 +55,24 @@ export const AddUsers = () => {
   const validationSchema = Yup.object().shape({
     name: Yup.string().min(3, 'Min 3 Chars').required('Field is Required').test('Unique Name', 'Name Already Exists', (value) => isNameExists(value)),
     age: Yup.number().max(50, 'Max Value is 50').required('Field is Required'),
-    // gender: Yup.string().min(3, 'Min 3 Chars').required('Field is Required'),
+    gender: Yup.string().min(3, 'Min 3 Chars').required('Field is Required'),
     contactDetails: Yup.array().of(Yup.object().shape({
       phoneNo: isEmailEntered ? Yup.string() : Yup.string().required('Field is Required'),
       emailId: Yup.string().email('Enter a Valid Email')
     }))
   })
 
-  const onGenderChange = (value: string,{setFieldValue,setFieldError}:FormikProps<UserModel>) => {
-    setFieldValue('gender',value);
-    
-  }
-  const validateGender = ({values,setFieldError}:FormikProps<UserModel>) => {
-    if(values.gender == 'Males') {
-      setFieldError('gender','Errorr');
+  const onGenderChange = (e: any,{setFieldValue,setFieldError,handleChange}:FormikProps<UserModel>) => {
+    handleChange(e);
+      if(e?.target.value == 'maless') {
+      setFieldError('gender','Invalid Gender');
     }  
   }
-
+  // const validateGender = ({values,setFieldError}:FormikProps<UserModel>) => {
+ 
   return (
     userData &&
-    <Formik initialValues={userData} onSubmit={onSubmit} validationSchema={validationSchema}>
+    <Formik initialValues={userData} onSubmit={onSubmit} validationSchema={validationSchema}  validateOnChange={false} >
       {(formikProps) => (
         <Form>
           <FormObserver/>
@@ -91,7 +89,7 @@ export const AddUsers = () => {
           </div>
           <div>
             Gender:
-            <Field name='gender' type="text"  onChange={(e: any) => onGenderChange(e.target.value,formikProps)} validate={validateGender(formikProps)}></Field>
+            <Field name='gender' type="text"  onChange={(e: any) => onGenderChange(e,formikProps)}  ></Field>
             <div className='error-msg'>
               <ErrorMessage name='gender'></ErrorMessage>
             </div>
